@@ -8,7 +8,6 @@
     "@dashevo/dash-spv": "^1.0.1",
     "@dashevo/dashcore-lib": "^0.17.1",
   },
-  "scripts": {},
   "author": "Pascal Meyer",
   "license": "MIT"
 }
