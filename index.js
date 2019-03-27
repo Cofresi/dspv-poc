@@ -23,7 +23,8 @@ async function logOutput(msg, delay = 50) {
 // ==== Client initial state
 
 async function init() {
-  api = new Api();
+  const seeds = [{service: '195.141.143.49'}];
+  api = new Api({seeds, port: 3000});
   // using genesis as nullhash as core is bugged
   nullHash = await api.getBlockHash(0);
 }
@@ -45,6 +46,7 @@ async function getValidatedHeaderchain() {
   for (let i = pocGenesis + 1; i <= pocBestHeight; i += maxHeaders) {
     /* eslint-disable-next-line no-await-in-loop */
     const newHeaders = await api.getBlockHeaders(i, maxHeaders);
+    await logOutput(`newHeaders ${newHeaders}`);
     headerChain.addHeaders(newHeaders);
   }
 
