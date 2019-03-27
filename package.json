@@ -1,5 +1,5 @@
 {
-  "name": "@dashevo/dapi-client",
+  "name": "dspv-poc",
   "version": "0.3.3",
   "description": "DSPV POC",
   "main": "index.js",
