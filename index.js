@@ -1,7 +1,6 @@
 const Api = require('@dashevo/dapi-client');
-const { SpvChain } = require('@dashevo/dash-spv');
+const { SpvChain, MerkleProof } = require('@dashevo/dash-spv');
 const dashcore = require('@dashevo/dashcore-lib');
-const { MerkleProof } = require('@dashevo/dash-spv');
 
 // Height used for poc (to save syncing time)
 const pocBestHeight = 2896;
