@@ -4,9 +4,9 @@
   "description": "DSPV POC",
   "main": "index.js",
   "dependencies": {
-    "@dashevo/dapi-client": "^0.3.3",
+    "@dashevo/dapi-client": "^0.3.2",
     "@dashevo/dash-spv": "^1.0.1",
-    "@dashevo/dashcore-lib": "^0.17.1",
+    "@dashevo/dashcore-lib": "^0.17.1"
   },
   "author": "Pascal Meyer",
   "license": "MIT"
