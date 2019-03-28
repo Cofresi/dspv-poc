@@ -1,6 +1,7 @@
 const Api = require('@dashevo/dapi-client');
 const { SpvChain } = require('@dashevo/dash-spv');
 const commander = require('commander');
+const excludedMNs = require('./fixtures/excludedServices');
 
 const log = console;
 
@@ -18,10 +19,12 @@ async function logOutput(msg, delay = 50) {
  */
 async function initApi(seeds) {
   const services = seeds.map(seed => new Object({ service: seed }));
+  const excludesIps = excludedMNs.getExcludedMNServices().map(service => service.split(':')[0]);
 
   api = new Api({
     seeds: services,
-    port: 3000
+    port: 3000,
+    excludesIps
   });
 
   return api;
