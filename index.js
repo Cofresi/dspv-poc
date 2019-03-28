@@ -35,15 +35,16 @@ async function initApi(seeds) {
  * @param {int} fromHeight
  * @param {int} toHeight
  * @param {int} step
+ * @param {string[]|undefined} excludedIps
  *
  * @returns {Promise<void>}
  */
-async function populateHeaderChain(api, headerChain, fromHeight, toHeight, step) {
+async function populateHeaderChain(api, headerChain, fromHeight, toHeight, step, excludedIps = undefined) {
   const extraHeight = (toHeight - fromHeight) % step;
 
   for (let height = fromHeight; height < toHeight - extraHeight; height += step) {
     /* eslint-disable-next-line no-await-in-loop */
-    const newHeaders = await api.getBlockHeaders(height, step);
+    const newHeaders = await api.getBlockHeaders(height, step, excludedIps);
     await logOutput(`newHeaders ${newHeaders}`);
     headerChain.addHeaders(newHeaders);
   }
@@ -96,8 +97,6 @@ async function buildHeaderChain(api, seeds, parallel, fromHeight, toHeight, step
     const promises = seeds.map(async (seed, index) => {
       const excludedSeeds = seeds.filter(s => s !== seed);
 
-      // TODO pass excluded seeds to DAPI client request
-
       const localFromHeight = fromHeight + (heightDelta * index);
       let localToHeight = localFromHeight + heightDelta;
 
@@ -106,7 +105,7 @@ async function buildHeaderChain(api, seeds, parallel, fromHeight, toHeight, step
         localToHeight += heightExtra;
       }
 
-      await populateHeaderChain(api, headerChain, localFromHeight, localToHeight, step);
+      await populateHeaderChain(api, headerChain, localFromHeight, localToHeight, step, excludedSeeds);
     });
 
     await Promise.all(promises);
