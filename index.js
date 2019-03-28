@@ -68,6 +68,9 @@ async function populateHeaderChain(api, headerChain, fromHeight, toHeight, step)
  * @return {Promise<SpvChain>}
  */
 async function buildHeaderChain(api, seeds, parallel, fromHeight, toHeight, step) {
+  // Start time to check method call time
+  const hrStartTime = process.hrtime();
+
   const fromBlockHash = await api.getBlockHash(fromHeight);
   const fromBlockHeader = await api.getBlockHeader(fromBlockHash);
 
@@ -119,6 +122,10 @@ async function buildHeaderChain(api, seeds, parallel, fromHeight, toHeight, step
   // implementation detail @ https://docs.google.com/document/d/1jV0zCie5rVbbK9TbhkDUbbaQ9kG9oU8XTAWMVYjRc2Q/edit#heading=h.trwvf85zn0se
 
   await logOutput(`Got headerChain with longest chain of length ${headerChain.getLongestChain().length}`);
+
+  const hrEndTime = process.hrtime(hrStartTime);
+
+  await logOutput(`buildHeaderChain took ${hrEndTime[0]}s ${hrEndTime[1] / 1000000}ms`);
 
   return headerChain;
 }
