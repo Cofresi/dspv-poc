@@ -31,6 +31,31 @@ async function initApi(seeds) {
 }
 
 /**
+ * Retrieve headers for a slice and populate header chain
+ *
+ * @param {DAPIClient} api
+ * @param {SpvChain} headerChain
+ * @param {int} fromHeight
+ * @param {int} toHeight
+ * @param {int} step
+ *
+ * @returns {Promise<void>}
+ */
+async function populateHeaderChain(api, headerChain, fromHeight, toHeight, step) {
+  const extraHeight = (toHeight - fromHeight) % step;
+
+  for (let height = fromHeight; height < toHeight - extraHeight; height += step) {
+    /* eslint-disable-next-line no-await-in-loop */
+    const newHeaders = await api.getBlockHeaders(height, step);
+    await logOutput(`newHeaders ${newHeaders}`);
+    headerChain.addHeaders(newHeaders);
+  }
+
+  const extraHeaders = await api.getBlockHeaders(toHeight, extraHeight);
+  headerChain.addHeaders(extraHeaders);
+}
+
+/**
  * Build the header chain for a specified slice
  *
  * @param {DAPIClient} api
@@ -54,21 +79,46 @@ async function buildHeaderChain(api, seeds, parallel, fromHeight, toHeight, step
   const headerChain = new SpvChain('custom_genesis', numConfirms, fromBlockHeader);
 
   if (parallel) {
-    // TODO implement parallel queries
+    /**
+     * Naive worker-like implementation of a parallel calls
+     *
+     *    node1    node2     node3
+     *   /    \   /    \   /       \
+     *  |  |  |  |  |  |  |  |  |  |
+     *  1  2  3  1  2  3  1  2  3  4
+     * [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] - header chain
+     *
+     */
+    const heightDiff = toHeight - fromHeight;
+    const heightDelta = parseInt(heightDiff / seeds.length);
+    const heightExtra = heightDiff % seeds.length;
+
+    const promises = seeds.map(async (seed, index) => {
+      const excludedSeeds = seeds.filter(s => s !== seed);
+
+      // TODO pass excluded seeds to DAPI client request
+
+      const localFromHeight = fromHeight + (heightDelta * index);
+      let localToHeight = localFromHeight + heightDelta;
+
+      // Ask last node a few extra headers
+      if (index === seeds.length - 1) {
+        localToHeight += heightExtra;
+      }
+
+      await populateHeaderChain(api, headerChain, localFromHeight, localToHeight, step);
+    });
+
+    await Promise.all(promises);
   } else {
-    for (let height = fromHeight + 1; height <= toHeight; height += step) {
-      /* eslint-disable-next-line no-await-in-loop */
-      const newHeaders = await api.getBlockHeaders(height, step);
-      await logOutput(`newHeaders ${newHeaders}`);
-      headerChain.addHeaders(newHeaders);
-    }
+    await populateHeaderChain(api, headerChain, fromHeight, toHeight, step);
   }
 
   // NOTE: query a few nodes by repeating the process to make sure you on the longest chain
   // headerChain instance will automatically follow the longest chain, keep track of orphans, etc
   // implementation detail @ https://docs.google.com/document/d/1jV0zCie5rVbbK9TbhkDUbbaQ9kG9oU8XTAWMVYjRc2Q/edit#heading=h.trwvf85zn0se
 
-  await logOutput(`Got headerchain with longest chain of length ${headerChain.getLongestChain().length}`);
+  await logOutput(`Got headerChain with longest chain of length ${headerChain.getLongestChain().length}`);
 
   return headerChain;
 }
@@ -90,7 +140,7 @@ async function validateCheckpoints(headerChain) {
   if (checkpoints.every(cp => headerChain.getLongestChain().map(h => h.hash).includes(cp))) {
     await logOutput(`Checkpoints valid on headerChain ${headerChain.getLongestChain().length}`);
   } else {
-    await logOutput('INVALID CHECKPOINT! please query more headers from other dapi nodes');
+    await logOutput('INVALID CHECKPOINT! please query more headers from other DAPI nodes');
   }
 }
 
