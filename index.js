@@ -24,9 +24,6 @@ async function initApi(seeds) {
     port: 3000
   });
 
-  // using genesis as nullhash as core is bugged
-  await api.getBlockHash(0);
-
   return api;
 }
 
