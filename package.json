@@ -4,7 +4,7 @@
   "description": "DSPV POC",
   "main": "index.js",
   "dependencies": {
-    "@dashevo/dapi-client": "^0.3.3",
+    "@dashevo/dapi-client": "git+https://git@github.com/dashevo/dapi-client#dspvTest",
     "@dashevo/dash-spv": "^1.0.1",
     "@dashevo/dashcore-lib": "^0.17.1",
     "commander": "^2.19.0"
