@@ -6,7 +6,8 @@
   "dependencies": {
     "@dashevo/dapi-client": "^0.3.3",
     "@dashevo/dash-spv": "^1.0.1",
-    "@dashevo/dashcore-lib": "^0.17.1"
+    "@dashevo/dashcore-lib": "^0.17.1",
+    "commander": "^2.19.0"
   },
   "author": "Pascal Meyer",
   "license": "MIT"
