@@ -1,5 +1,5 @@
 module.exports = {
-  getTestNodes: function getTestNodes() {
+   getTestNodes: function getTestNodes() {
     return [
       {
         "service": "195.141.143.49:19999",

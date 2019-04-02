@@ -18,8 +18,8 @@ async function logOutput(msg, delay = 50) {
  * @return {Promise<DAPIClient>}
  */
 async function initApi(seeds) {
-  const services = seeds ? seeds.map(seed => new Object({ service: seed })) : testNodes.getTestNodes();
-
+  const tnodes = testNodes.getTestNodes();
+  const services = seeds.length !== 0 ? seeds.map(seed => new Object({ service: seed })) : tnodes;
   api = new Api({
     seeds: services,
     port: 3000
