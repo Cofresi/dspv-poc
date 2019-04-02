@@ -9,6 +9,6 @@
     "@dashevo/dashcore-lib": "^0.17.1",
     "commander": "^2.19.0"
   },
-  "author": "Pascal Meyer",
+  "author": "Djavid & Pascal",
   "license": "MIT"
 }
