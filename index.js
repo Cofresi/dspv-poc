@@ -1,6 +1,7 @@
 const Api = require('@dashevo/dapi-client');
 const { SpvChain } = require('@dashevo/dash-spv');
 const commander = require('commander');
+const testNodes = require('./fixtures/testNodes.js');
 
 const log = console;
 
@@ -17,7 +18,7 @@ async function logOutput(msg, delay = 50) {
  * @return {Promise<DAPIClient>}
  */
 async function initApi(seeds) {
-  const services = seeds.map(seed => new Object({ service: seed }));
+  const services = seeds ? seeds.map(seed => new Object({ service: seed })) : testNodes.getTestNodes();
 
   api = new Api({
     seeds: services,
