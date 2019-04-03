@@ -41,7 +41,7 @@ async function initApi(seeds) {
  * @returns {Promise<void>}
  */
 async function populateHeaderChain(api, headerChain, fromHeight, toHeight, step, excludedIps = undefined) {
-  const extraHeight = (toHeight - fromHeight) % step;
+  const extraHeight = (toHeight - fromHeight) > step ? (toHeight - fromHeight) % step : 0;
 
   for (let height = fromHeight; height < toHeight - extraHeight; height += step) {
     /* eslint-disable-next-line no-await-in-loop */
@@ -50,8 +50,10 @@ async function populateHeaderChain(api, headerChain, fromHeight, toHeight, step,
     headerChain.addHeaders(newHeaders);
   }
 
-  const extraHeaders = await api.getBlockHeaders(toHeight, extraHeight);
-  headerChain.addHeaders(extraHeaders);
+  if (extraHeight > 0) {
+    const extraHeaders = await api.getBlockHeaders(toHeight, extraHeight);
+    headerChain.addHeaders(extraHeaders);
+  }
 }
 
 /**
@@ -157,10 +159,19 @@ async function validateCheckpoints(headerChain) {
  * @return {Promise<void>}
  */
 async function sync(seeds, cmd) {
+  const tNodes = testNodes.getTestNodes();
+
+  let nodes;
+  if (seeds.length > 0) {
+    nodes = seeds;
+  } else {
+    nodes = tNodes.map(n => n.service);
+  }
+
   const api = await initApi(seeds);
   const headerChain = await buildHeaderChain(
     api,
-    seeds,
+    nodes,
     cmd.parallel,
     cmd.from,
     cmd.to,
@@ -172,9 +183,9 @@ async function sync(seeds, cmd) {
 commander
   .command('sync [seeds...]')
   .option('-p, --parallel', 'Make parallel requests to DAPI nodes')
-  .option('-f, --from <n>', 'Block height to start from', parseInt, 1000)
-  .option('-t, --to <n>', 'Block height to stop parsing onto', parseInt, 2000)
-  .option('-s, --step <n>', 'Number of blocks to get in a batch', parseInt, 24)
+  .option('-f, --from <n>', 'Block height to start from', (val) => parseInt(val), 1000)
+  .option('-t, --to <n>', 'Block height to stop parsing onto', (val) => parseInt(val), 1500)
+  .option('-s, --step <n>', 'Number of blocks to get in a batch', (val) => parseInt(val), 24)
   .action(sync);
 
 commander.parse(process.argv);
