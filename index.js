@@ -188,7 +188,7 @@ commander
   .option('-p, --parallel', 'Make parallel requests to DAPI nodes')
   .option('-f, --from <n>', 'Block height to start from', (val) => parseInt(val), 1000)
   .option('-t, --to <n>', 'Block height to stop parsing onto', (val) => parseInt(val), 1500)
-  .option('-s, --step <n>', 'Number of blocks to get in a batch. Set to 0 for auto-step', (val) => parseInt(val), 0)
+  .option('-s, --step <n>', 'Number of blocks to get in a batch. Set to 0 for auto-step (default)', (val) => parseInt(val), 0)
   .action(sync);
 
 commander.parse(process.argv);
