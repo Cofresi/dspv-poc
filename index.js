@@ -45,7 +45,7 @@ async function populateHeaderChain(api, headerChain, fromHeight, toHeight, step,
 
   for (let height = fromHeight; height < toHeight - extraHeight; height += step) {
     /* eslint-disable-next-line no-await-in-loop */
-    const newHeaders = await api.getBlockHeaders(height, step, excludedIps);
+    const newHeaders = await api.getBlockHeaders(height, step, false, excludedIps);
     await logOutput(`newHeaders ${newHeaders}`);
     headerChain.addHeaders(newHeaders);
   }
