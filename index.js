@@ -95,6 +95,7 @@ async function buildHeaderChain(api, seeds, parallel, fromHeight, toHeight, step
      */
     const heightDiff = toHeight - fromHeight;
     const heightDelta = parseInt(heightDiff / seeds.length);
+    step = step === 0 ? Math.min(heightDelta, 2000) : step;
     const heightExtra = heightDiff % seeds.length;
 
     const promises = seeds.map(async (seed, index) => {
@@ -185,7 +186,7 @@ commander
   .option('-p, --parallel', 'Make parallel requests to DAPI nodes')
   .option('-f, --from <n>', 'Block height to start from', (val) => parseInt(val), 1000)
   .option('-t, --to <n>', 'Block height to stop parsing onto', (val) => parseInt(val), 1500)
-  .option('-s, --step <n>', 'Number of blocks to get in a batch', (val) => parseInt(val), 24)
+  .option('-s, --step <n>', 'Number of blocks to get in a batch. Set to 0 for auto-step', (val) => parseInt(val), 0)
   .action(sync);
 
 commander.parse(process.argv);
