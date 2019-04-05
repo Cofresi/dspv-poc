@@ -82,6 +82,10 @@ async function buildHeaderChain(api, seeds, parallel, fromHeight, toHeight, step
 
   const headerChain = new SpvChain('custom_genesis', numConfirms, fromBlockHeader);
 
+  const heightDiff = toHeight - fromHeight;
+  const heightDelta = parseInt(heightDiff / seeds.length);
+  const bestStep = step === 0 ? Math.min(heightDelta, 2000) : step;
+
   if (parallel) {
     /**
      * Naive worker-like implementation of a parallel calls
@@ -93,9 +97,7 @@ async function buildHeaderChain(api, seeds, parallel, fromHeight, toHeight, step
      * [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] - header chain
      *
      */
-    const heightDiff = toHeight - fromHeight;
-    const heightDelta = parseInt(heightDiff / seeds.length);
-    step = step === 0 ? Math.min(heightDelta, 2000) : step;
+
     const heightExtra = heightDiff % seeds.length;
 
     const promises = seeds.map(async (seed, index) => {
@@ -109,12 +111,12 @@ async function buildHeaderChain(api, seeds, parallel, fromHeight, toHeight, step
         localToHeight += heightExtra;
       }
 
-      await populateHeaderChain(api, headerChain, localFromHeight, localToHeight, step, excludedSeeds);
+      await populateHeaderChain(api, headerChain, localFromHeight, localToHeight, bestStep, excludedSeeds);
     });
 
     await Promise.all(promises);
   } else {
-    await populateHeaderChain(api, headerChain, fromHeight, toHeight, step);
+    await populateHeaderChain(api, headerChain, fromHeight, toHeight, bestStep);
   }
 
   // NOTE: query a few nodes by repeating the process to make sure you on the longest chain
