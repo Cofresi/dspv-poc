@@ -5,7 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "@dashevo/dapi-client": "git+https://git@github.com/dashevo/dapi-client#dspvTest",
-    "@dashevo/dash-spv": "git+https://git@github.com/dashevo/dash-spv#fix/normalizeHeader",
+    "@dashevo/dash-spv": "^1.0.2",
     "@dashevo/dashcore-lib": "^0.17.1",
     "commander": "^2.19.0"
   },
