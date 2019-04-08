@@ -120,10 +120,10 @@ async function buildHeaderChain(api, seeds, parallel, fromHeight, toHeight, step
       }
 
       const newHeaders = await populateHeaderChain(api, headerChain, localFromHeight, localToHeight, bestStep, excludedSeeds);
-      console.log('localFromHeight', (heightDelta * index));
-      console.log('delta', heightDelta);
+      console.log('localFromHeight', (bestStep * index));
+      console.log('delta', bestStep);
       console.log('length', newHeaders.length);
-      headerStore.splice((heightDelta * index), heightDelta, ...newHeaders);
+      headerStore.splice((bestStep * index), bestStep, ...newHeaders);
     });
 
     await Promise.all(promises);
