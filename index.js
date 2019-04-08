@@ -42,18 +42,22 @@ async function initApi(seeds) {
  */
 async function populateHeaderChain(api, headerChain, fromHeight, toHeight, step, excludedIps = undefined) {
   const extraHeight = (toHeight - fromHeight) > step ? (toHeight - fromHeight) % step : 0;
+  let returnHeaders;
 
   for (let height = fromHeight; height < toHeight - extraHeight; height += step) {
     /* eslint-disable-next-line no-await-in-loop */
     const newHeaders = await api.getBlockHeaders(height, step, false, excludedIps);
     await logOutput(`newHeaders ${newHeaders}`);
     headerChain.addHeaders(newHeaders);
+    returnHeaders = newHeaders;
   }
 
   if (extraHeight > 0) {
     const extraHeaders = await api.getBlockHeaders(toHeight, extraHeight);
     headerChain.addHeaders(extraHeaders);
+    returnHeaders = extraHeaders;
   }
+  return returnHeaders
 }
 
 /**
@@ -83,6 +87,10 @@ async function buildHeaderChain(api, seeds, parallel, fromHeight, toHeight, step
   const headerChain = new SpvChain('custom_genesis', numConfirms, fromBlockHeader);
 
   const heightDiff = toHeight - fromHeight;
+
+  // temporary header store array. Can be used to attach to main header store later
+  let headerStore = Array.from(Array(heightDiff));
+
   const heightDelta = parseInt(heightDiff / seeds.length);
   const bestStep = step === 0 ? Math.min(heightDelta, 2000) : step;
 
@@ -111,12 +119,16 @@ async function buildHeaderChain(api, seeds, parallel, fromHeight, toHeight, step
         localToHeight += heightExtra;
       }
 
-      await populateHeaderChain(api, headerChain, localFromHeight, localToHeight, bestStep, excludedSeeds);
+      const newHeaders = await populateHeaderChain(api, headerChain, localFromHeight, localToHeight, bestStep, excludedSeeds);
+      console.log('localFromHeight', (heightDelta * index));
+      console.log('delta', heightDelta);
+      console.log('length', newHeaders.length);
+      headerStore.splice((heightDelta * index), heightDelta, ...newHeaders);
     });
 
     await Promise.all(promises);
   } else {
-    await populateHeaderChain(api, headerChain, fromHeight, toHeight, bestStep);
+    headerStore = await populateHeaderChain(api, headerChain, fromHeight, toHeight, bestStep);
   }
 
   // NOTE: query a few nodes by repeating the process to make sure you on the longest chain
@@ -128,6 +140,9 @@ async function buildHeaderChain(api, seeds, parallel, fromHeight, toHeight, step
   const hrEndTime = process.hrtime(hrStartTime);
 
   await logOutput(`buildHeaderChain took ${hrEndTime[0]}s ${hrEndTime[1] / 1000000}ms`);
+
+  await logOutput(`headerStore ${headerStore}`);
+  await logOutput(`Got headerStore with longest chain of length ${headerStore.length}`);
 
   return headerChain;
 }
@@ -192,3 +207,4 @@ commander
   .action(sync);
 
 commander.parse(process.argv);
+
