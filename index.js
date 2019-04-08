@@ -45,7 +45,7 @@ async function populateHeaderChain(api, headerChain, fromHeight, toHeight, step,
 
   for (let height = fromHeight; height < toHeight - extraHeight; height += step) {
     /* eslint-disable-next-line no-await-in-loop */
-    const newHeaders = await api.getBlockHeaders(height, step, excludedIps);
+    const newHeaders = await api.getBlockHeaders(height, step, false, excludedIps);
     await logOutput(`newHeaders ${newHeaders}`);
     headerChain.addHeaders(newHeaders);
   }
@@ -82,6 +82,10 @@ async function buildHeaderChain(api, seeds, parallel, fromHeight, toHeight, step
 
   const headerChain = new SpvChain('custom_genesis', numConfirms, fromBlockHeader);
 
+  const heightDiff = toHeight - fromHeight;
+  const heightDelta = parseInt(heightDiff / seeds.length);
+  const bestStep = step === 0 ? Math.min(heightDelta, 2000) : step;
+
   if (parallel) {
     /**
      * Naive worker-like implementation of a parallel calls
@@ -93,8 +97,7 @@ async function buildHeaderChain(api, seeds, parallel, fromHeight, toHeight, step
      * [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] - header chain
      *
      */
-    const heightDiff = toHeight - fromHeight;
-    const heightDelta = parseInt(heightDiff / seeds.length);
+
     const heightExtra = heightDiff % seeds.length;
 
     const promises = seeds.map(async (seed, index) => {
@@ -108,12 +111,12 @@ async function buildHeaderChain(api, seeds, parallel, fromHeight, toHeight, step
         localToHeight += heightExtra;
       }
 
-      await populateHeaderChain(api, headerChain, localFromHeight, localToHeight, step, excludedSeeds);
+      await populateHeaderChain(api, headerChain, localFromHeight, localToHeight, bestStep, excludedSeeds);
     });
 
     await Promise.all(promises);
   } else {
-    await populateHeaderChain(api, headerChain, fromHeight, toHeight, step);
+    await populateHeaderChain(api, headerChain, fromHeight, toHeight, bestStep);
   }
 
   // NOTE: query a few nodes by repeating the process to make sure you on the longest chain
@@ -185,7 +188,7 @@ commander
   .option('-p, --parallel', 'Make parallel requests to DAPI nodes')
   .option('-f, --from <n>', 'Block height to start from', (val) => parseInt(val), 1000)
   .option('-t, --to <n>', 'Block height to stop parsing onto', (val) => parseInt(val), 1500)
-  .option('-s, --step <n>', 'Number of blocks to get in a batch', (val) => parseInt(val), 24)
+  .option('-s, --step <n>', 'Number of blocks to get in a batch. Set to 0 for auto-step (default)', (val) => parseInt(val), 0)
   .action(sync);
 
 commander.parse(process.argv);
