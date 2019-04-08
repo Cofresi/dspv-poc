@@ -38,7 +38,7 @@ async function initApi(seeds) {
  * @param {int} step
  * @param {string[]|undefined} excludedIps
  *
- * @returns {Promise<void>}
+ * @returns {Promise<array>}
  */
 async function populateHeaderChain(api, headerChain, fromHeight, toHeight, step, excludedIps = undefined) {
   const extraHeight = (toHeight - fromHeight) > step ? (toHeight - fromHeight) % step : 0;
