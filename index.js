@@ -37,27 +37,27 @@ async function initApi(seeds) {
  * @param {int} toHeight
  * @param {int} step
  * @param {string[]|undefined} excludedIps
+ * @param {int} [extraHeight=0]
  *
  * @returns {Promise<array>}
  */
-async function populateHeaderChain(api, headerChain, fromHeight, toHeight, step, excludedIps = undefined) {
-  const extraHeight = (toHeight - fromHeight) > step ? (toHeight - fromHeight) % step : 0;
-  let returnHeaders;
+async function populateHeaderChain(api, headerChain, fromHeight, toHeight, step, excludedIps = undefined, extraHeight = 0) {
+
+  let newHeaders;
 
   for (let height = fromHeight; height < toHeight - extraHeight; height += step) {
     /* eslint-disable-next-line no-await-in-loop */
-    const newHeaders = await api.getBlockHeaders(height, step, false, excludedIps);
+    newHeaders = await api.getBlockHeaders(height, step, false, excludedIps);
     await logOutput(`newHeaders ${newHeaders}`);
     headerChain.addHeaders(newHeaders);
-    returnHeaders = newHeaders;
   }
 
   if (extraHeight > 0) {
     const extraHeaders = await api.getBlockHeaders(toHeight, extraHeight);
     headerChain.addHeaders(extraHeaders);
-    returnHeaders = extraHeaders;
+    return newHeaders.concat(extraHeaders);
   }
-  return returnHeaders
+  return newHeaders
 }
 
 /**
@@ -106,24 +106,25 @@ async function buildHeaderChain(api, seeds, parallel, fromHeight, toHeight, step
      *
      */
 
-    const heightExtra = heightDiff % seeds.length;
-
     const promises = seeds.map(async (seed, index) => {
+
       const excludedSeeds = seeds.filter(s => s !== seed);
 
       const localFromHeight = fromHeight + (heightDelta * index);
       let localToHeight = localFromHeight + heightDelta;
 
       // Ask last node a few extra headers
-      if (index === seeds.length - 1) {
-        localToHeight += heightExtra;
-      }
+      const heightExtra = (index === seeds.length - 1) ? heightDiff % seeds.length : 0;
 
-      const newHeaders = await populateHeaderChain(api, headerChain, localFromHeight, localToHeight, bestStep, excludedSeeds);
-      console.log('localFromHeight', (bestStep * index));
-      console.log('delta', bestStep);
-      console.log('length', newHeaders.length);
-      headerStore.splice((bestStep * index), bestStep, ...newHeaders);
+      const newHeaders = await populateHeaderChain(api, headerChain, localFromHeight, localToHeight, bestStep, excludedSeeds, heightExtra);
+      if (Math.min(newHeaders.length, 2000) === bestStep) {
+        headerStore.splice((bestStep * index), bestStep, ...newHeaders);
+      }
+      console.log('newHeaders.length', newHeaders.length)
+      console.log('bestStep + heightExtra', bestStep + heightExtra)
+      if (newHeaders.length === bestStep + heightExtra) {
+        headerStore.splice((headerStore.length - (bestStep + heightExtra)), bestStep + heightExtra, ...newHeaders);
+      }
     });
 
     await Promise.all(promises);
