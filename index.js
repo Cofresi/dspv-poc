@@ -50,13 +50,13 @@ async function populateHeaderChain(api, headerChunks, headerChain, fromHeight, t
     const newHeaders = await api.getBlockHeaders(height, step, false, excludedIps);
     await logOutput(`newHeaders ${newHeaders}`);
     headerChain.addHeaders(newHeaders);
-    headerChunks.push({ "height" : (height - offset), "length" : step, "items" : newHeaders });
+    headerChunks.push({ "from" : (height - offset), "to" : ((height - offset) + step), "items" : newHeaders });
   }
 
   if (extraHeight > 0) {
     const extraHeaders = await api.getBlockHeaders(toHeight, extraHeight);
     headerChain.addHeaders(extraHeaders);
-    headerChunks.push({ "height" : (toHeight - offset), "length" : extraHeight, "items" : extraHeaders });
+    headerChunks.push({ "from" : (toHeight - offset), "to" : ((toHeight - offset) + extraHeight), "items" : extraHeaders });
   }
 }
 
@@ -114,7 +114,7 @@ async function buildHeaderChain(api, seeds, parallel, fromHeight, toHeight, step
       let localToHeight = localFromHeight + heightDelta;
 
       // Ask last node a few extra headers
-      const heightExtra = (index === seeds.length - 1) ? heightDiff % seeds.length : 0;
+      const heightExtra = (index === seeds.length - 1) ? heightDiff % Math.min(seeds.length, bestStep) : 0;
 
       await populateHeaderChain(api, headerChunks, headerChain, localFromHeight, localToHeight, bestStep, fromHeight, excludedSeeds, heightExtra);
     });
@@ -135,18 +135,30 @@ async function buildHeaderChain(api, seeds, parallel, fromHeight, toHeight, step
   await logOutput(`buildHeaderChain took ${hrEndTime[0]}s ${hrEndTime[1] / 1000000}ms`);
 
   // putting the chunks into the correct order
-  headerChunks.sort((a, b) => a.height - b.height);
+  headerChunks.sort((a, b) => a.from - b.from);
 
-  const headerStore = headerChunks.map(async (chunk, i) => {
-    await logOutput(`chunk height ${chunk.height}`);
-    await logOutput(`chunk length ${chunk.length}`);
-    return chunk.items;
-  });
+  let headerStore = [];
 
-  await logOutput(`Got headerStore ${headerStore}`);
+  await fillHeaderStore(headerStore, headerChunks);
+  await printHeaderStore(headerStore);
   await logOutput(`Got headerStore with longest chain of length ${headerStore.length}`);
 
   return headerChain;
+}
+
+async function fillHeaderStore(store, chunks) {
+  chunks.forEach(function(chunk) {
+    const baseHeight = chunk.from;
+    chunk.items.forEach(function(h, i) {
+      store.push({ "height" : (baseHeight + i), "header" : h })
+    });
+  });
+}
+
+async function printHeaderStore(store) {
+  store.forEach(function(h) {
+    console.log(`Height ${h.height}: ${h.header} `);
+  });
 }
 
 /**
