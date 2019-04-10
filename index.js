@@ -134,25 +134,24 @@ async function buildHeaderChain(api, seeds, parallel, fromHeight, toHeight, step
 
   await logOutput(`buildHeaderChain took ${hrEndTime[0]}s ${hrEndTime[1] / 1000000}ms`);
 
-  // putting the chunks into the correct order
-  headerChunks.sort((a, b) => a.from - b.from);
-
-  let headerStore = [];
-
-  await fillHeaderStore(headerStore, headerChunks);
+  const headerStore = await getHeaderStoreFromChunks(headerChunks);
   await printHeaderStore(headerStore);
   await logOutput(`Got headerStore with longest chain of length ${headerStore.length}`);
 
   return headerChain;
 }
 
-async function fillHeaderStore(store, chunks) {
+async function getHeaderStoreFromChunks(chunks) {
+  // putting the chunks into the correct order
+  chunks.sort((a, b) => a.from - b.from);
+  let store = [];
   chunks.forEach(function(chunk) {
     const baseHeight = chunk.from;
     chunk.items.forEach(function(h, i) {
       store.push({ "height" : (baseHeight + i), "header" : h })
     });
   });
+  return store;
 }
 
 async function printHeaderStore(store) {
