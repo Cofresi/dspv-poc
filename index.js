@@ -142,9 +142,12 @@ async function buildHeaderChain(api, seeds, parallel, fromHeight, toHeight, step
 }
 
 async function getHeaderStoreFromChunks(chunks) {
+
   // putting the chunks into the correct order
   chunks.sort((a, b) => a.from - b.from);
   let store = [];
+
+  // fill up store
   chunks.forEach(function(chunk) {
     const baseHeight = chunk.from;
     chunk.items.forEach(function(h, i) {
