@@ -158,8 +158,8 @@ async function getHeaderStoreFromChunks(chunks) {
 }
 
 async function printHeaderStore(store) {
-  store.forEach(function(h) {
-    console.log(`Height ${h.height}: ${h.header} `);
+  store.forEach(async function(h) {
+    await logOutput(`Height ${h.height}: ${h.header} `);
   });
 }
 
