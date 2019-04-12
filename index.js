@@ -163,6 +163,12 @@ async function printHeaderStore(store) {
   });
 }
 
+async function printHeaderChain(headerChain) {
+  headerChain.getLongestChain().forEach(async function(el) {
+    await logOutput(`element: ${el} `);
+  });
+}
+
 /**
  * Validate checkpoints of a header chain
  *
@@ -211,7 +217,8 @@ async function sync(seeds, cmd) {
     cmd.to,
     cmd.step,
   );
-  await validateCheckpoints(headerChain);
+  //await validateCheckpoints(headerChain);
+  //await printHeaderChain(headerChain)
 }
 
 commander
